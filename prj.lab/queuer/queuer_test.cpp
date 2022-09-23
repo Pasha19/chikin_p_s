@@ -136,4 +136,12 @@ TEST_CASE("move_self_assign") {
 
 }
 
+TEST_CASE("memory") {
+    QueueR qr{};
+    for (int i{0}; i < 100; ++i) {
+        qr.push(i);
+    }
+    REQUIRE_EQ(qr.size(), 100);
+}
+
 TEST_SUITE_END();

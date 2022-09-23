@@ -36,6 +36,9 @@ QueueR& QueueR::operator=(QueueR&& queueR) {
     if (&queueR == this) {
         return *this;
     }
+    if (root_ != nullptr) {
+        delete_(root_);
+    }
     root_ = queueR.root_;
     last_ = queueR.last_;
     size_ = queueR.size_;
