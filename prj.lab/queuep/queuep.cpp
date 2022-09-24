@@ -72,7 +72,7 @@ void QueueP::pop() {
 
 void QueueP::push(const el_t value) {
     if (size_ == 0) {
-        root_ = std::make_shared<Node>(value, nullptr, nullptr, nullptr); 
+        root_ = std::make_shared<Node>(value); 
         last_ = root_;
         ++size_;
         return;
@@ -103,13 +103,15 @@ void QueueP::append_(const el_t value) {
     std::shared_ptr<Node> newNode{ std::make_shared<Node>(value, nullptr, nullptr, node) };
     (rowIndex == 0 ? node->left : node->right) = newNode;
     last_ = newNode;
-    ++size_;
+    size_ = newSize;
 }
 
 void QueueP::remove_() {
     assert(size_ > 1);
     root_->value = last_->value;
-    (last_->top->left == last_ ? last_->top->left : last_->top->right) = nullptr;
+    auto lastTop = last_->top.lock();
+    assert(lastTop);
+    (lastTop->left == last_ ? lastTop->left : lastTop->right) = nullptr;
     last_ = nullptr;
     --size_;
     const s_t level{ log2_(size_) };
@@ -133,12 +135,12 @@ void QueueP::remove_() {
 
 void QueueP::sinkUp_() {
     std::shared_ptr<Node> node{ last_ };
-    while (node->top != nullptr) {
-        if (node->value >= node->top->value) {
+    while (auto nodeTop = node->top.lock()) {
+        if (node->value >= nodeTop->value) {
             return;
         }
-        std::swap(node->value, node->top->value);
-        node = node->top;
+        std::swap(node->value, nodeTop->value);
+        node = nodeTop;
     }
 }
 

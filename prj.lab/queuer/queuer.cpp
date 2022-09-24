@@ -115,7 +115,7 @@ void QueueR::append_(const el_t value) {
     Node* newNode{ new Node{ value, nullptr, nullptr, node } };
     (rowIndex == 0 ? node->left : node->right) = newNode;
     last_ = newNode;
-    ++size_;
+    size_ = newSize;
 }
 
 void QueueR::remove_() {

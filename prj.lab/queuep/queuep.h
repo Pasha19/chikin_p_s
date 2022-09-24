@@ -23,21 +23,26 @@ public:
 
 private:
     struct Node {
-        Node(
+        explicit Node(
             const el_t value_ = el_t{},
             const std::shared_ptr<Node>& left_ = nullptr,
             const std::shared_ptr<Node>& right_ = nullptr,
-            const std::shared_ptr<Node>& top_ = nullptr
+            const std::weak_ptr<Node>& top_ = std::weak_ptr<Node>{} 
         )
             : value(value_)
             , left(left_)
             , right(right_)
             , top(top_)
         {}
+        Node(const Node&) = default;
+        Node(Node&&) = default;
+        ~Node() = default;
+        Node& operator=(const Node&) = delete;
+        Node& operator=(Node&&) = delete;
         el_t value;
         std::shared_ptr<Node> left;
         std::shared_ptr<Node> right;
-        std::shared_ptr<Node> top;
+        std::weak_ptr<Node> top;
     };
 
     void append_(const el_t value);
