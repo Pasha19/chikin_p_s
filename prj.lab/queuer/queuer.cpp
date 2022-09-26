@@ -73,7 +73,7 @@ void QueueR::pop() {
         return;
     }
     remove_();
-    sinkDown_();
+    siftDown_();
 }
 
 void QueueR::push(const el_t value) {
@@ -84,7 +84,7 @@ void QueueR::push(const el_t value) {
         return;
     }
     append_(value);
-    sinkUp_();
+    siftUp_();
 }
 
 QueueR::~QueueR() {
@@ -144,7 +144,7 @@ void QueueR::remove_() {
     last_ = node;
 }
 
-void QueueR::sinkUp_() {
+void QueueR::siftUp_() {
     Node* node{ last_ };
     while (node->top != nullptr) {
         if (node->value >= node->top->value) {
@@ -155,7 +155,7 @@ void QueueR::sinkUp_() {
     }
 }
 
-void QueueR::sinkDown_() {
+void QueueR::siftDown_() {
     assert(size_ > 1);
     Node* node { root_ };
     while (node != nullptr) {

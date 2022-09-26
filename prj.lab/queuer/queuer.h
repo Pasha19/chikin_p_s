@@ -29,8 +29,8 @@ private:
 
     void append_(const el_t value);
     void remove_();
-    void sinkUp_();
-    void sinkDown_();
+    void siftUp_();
+    void siftDown_();
     static s_t log2_(const s_t value);
 
     static void delete_(const Node* node);

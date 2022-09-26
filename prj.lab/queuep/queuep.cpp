@@ -67,7 +67,7 @@ void QueueP::pop() {
         return;
     }
     remove_();
-    sinkDown_();
+    siftDown_();
 }
 
 void QueueP::push(const el_t value) {
@@ -78,7 +78,7 @@ void QueueP::push(const el_t value) {
         return;
     }
     append_(value);
-    sinkUp_();
+    siftUp_();
 }
 
 void QueueP::append_(const el_t value) {
@@ -133,7 +133,7 @@ void QueueP::remove_() {
     last_ = node;
 }
 
-void QueueP::sinkUp_() {
+void QueueP::siftUp_() {
     std::shared_ptr<Node> node{ last_ };
     while (auto nodeTop = node->top.lock()) {
         if (node->value >= nodeTop->value) {
@@ -144,7 +144,7 @@ void QueueP::sinkUp_() {
     }
 }
 
-void QueueP::sinkDown_() {
+void QueueP::siftDown_() {
     assert(size_ > 1);
     std::shared_ptr<Node> node{ root_ };
     while (node != nullptr) {
