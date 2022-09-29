@@ -24,14 +24,14 @@ public:
 private:
     struct Node {
         explicit Node(
-            const el_t value_ = el_t{},
-            const std::shared_ptr<Node>& left_ = nullptr,
-            const std::shared_ptr<Node>& right_ = nullptr,
-            const std::weak_ptr<Node>& top_ = std::weak_ptr<Node>{} 
+            el_t value_ = el_t{},
+            std::unique_ptr<Node>&& left_ = nullptr,
+            std::unique_ptr<Node>&& right_ = nullptr,
+            Node* const top_ = nullptr
         )
             : value(value_)
-            , left(left_)
-            , right(right_)
+            , left(std::move(left_))
+            , right(std::move(right_))
             , top(top_)
         {}
         Node(const Node&) = default;
@@ -40,9 +40,9 @@ private:
         Node& operator=(const Node&) = delete;
         Node& operator=(Node&&) = delete;
         el_t value;
-        std::shared_ptr<Node> left;
-        std::shared_ptr<Node> right;
-        std::weak_ptr<Node> top;
+        std::unique_ptr<Node> left;
+        std::unique_ptr<Node> right;
+        const Node* const top{ nullptr };
     };
 
     void append_(const el_t value);
@@ -51,14 +51,14 @@ private:
     void siftDown_();
     static s_t log2_(const s_t value);
 
-    std::shared_ptr<Node> copy_(
-        const std::shared_ptr<Node>& node,
-        const std::shared_ptr<Node>& top,
-        const std::shared_ptr<Node>& last
+    std::unique_ptr<Node> copy_(
+        const std::unique_ptr<Node>& node,
+        Node* const top,
+        const Node* const last
     );
 
-    std::shared_ptr<Node> root_;
-    std::shared_ptr<Node> last_;
+    std::unique_ptr<Node> root_;
+    Node* last_{ nullptr };
     s_t size_{ 0 };
 };
 

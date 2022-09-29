@@ -13,7 +13,7 @@ QueueP::QueueP(const QueueP& queueR)
 }
 
 QueueP::QueueP(QueueP&& queueR)
-    : root_(queueR.root_)
+    : root_(std::move(queueR.root_))
     , last_(queueR.last_)
     , size_(queueR.size_)
 {
@@ -35,7 +35,7 @@ QueueP& QueueP::operator=(QueueP&& queueR) {
     if (&queueR == this) {
         return *this;
     }
-    root_ = queueR.root_;
+    root_ = std::move(queueR.root_);
     last_ = queueR.last_;
     size_ = queueR.size_;
     queueR.root_ = nullptr;
@@ -52,7 +52,7 @@ QueueP::el_t QueueP::top() const {
 void QueueP::pop() {
     assert(root_ != nullptr && size_ != 0);
     if (size_ == 1) {
-        assert(last_ == root_ && root_->left == nullptr && root_->right == nullptr);
+        assert(last_ == root_.get() && root_->left == nullptr && root_->right == nullptr);
         root_ = nullptr;
         last_ = nullptr;
         size_ = 0;
@@ -62,7 +62,7 @@ void QueueP::pop() {
         assert(root_->left != nullptr && root_->right == nullptr);
         root_->value = root_->left->value;
         root_->left = nullptr;
-        last_ = root_;
+        last_ = root_.get();
         size_ = 1;
         return;
     }
@@ -72,8 +72,8 @@ void QueueP::pop() {
 
 void QueueP::push(const el_t value) {
     if (size_ == 0) {
-        root_ = std::make_shared<Node>(value); 
-        last_ = root_;
+        root_ = std::make_unique<Node>(value); 
+        last_ = root_.get();
         ++size_;
         return;
     }
@@ -87,12 +87,12 @@ void QueueP::append_(const el_t value) {
     s_t rowSize{ 1 << level };
     s_t rowMid{ rowSize / 2 };
     s_t rowIndex{ newSize - rowSize };
-    std::shared_ptr<Node> node{ root_ };
+    Node* node{ root_.get() };
     for (s_t i{ 1 }; i < level; ++i) {
         if (rowIndex < rowMid) {
-            node = node->left;
+            node = node->left.get();
         } else {
-            node = node->right;
+            node = node->right.get();
             rowIndex -= rowMid;
         }
         assert(node != nullptr);
@@ -100,30 +100,30 @@ void QueueP::append_(const el_t value) {
         rowMid = rowSize / 2;
     }
     assert(rowSize == 2 && rowIndex < 2);
-    std::shared_ptr<Node> newNode{ std::make_shared<Node>(value, nullptr, nullptr, node) };
-    (rowIndex == 0 ? node->left : node->right) = newNode;
-    last_ = newNode;
+    std::unique_ptr<Node> newNode{ std::make_unique<Node>(value, nullptr, nullptr, node) };
+    last_ = newNode.get();
+    (rowIndex == 0 ? node->left : node->right) = std::move(newNode);
     size_ = newSize;
 }
 
 void QueueP::remove_() {
     assert(size_ > 1);
     root_->value = last_->value;
-    auto lastTop = last_->top.lock();
+    Node* lastTop = const_cast<Node*>(last_->top);
     assert(lastTop);
-    (lastTop->left == last_ ? lastTop->left : lastTop->right) = nullptr;
+    (lastTop->left.get() == last_ ? lastTop->left : lastTop->right) = nullptr;
     last_ = nullptr;
     --size_;
     const s_t level{ log2_(size_) };
     s_t rowSize{ 1 << level };
     s_t rowMid{ rowSize / 2 };
     s_t rowIndex{ size_ - rowSize };
-    std::shared_ptr<Node> node{ root_ };
+    Node* node{ root_.get() };
     for (s_t i{ 0 }; i < level; ++i) {
         if (rowIndex < rowMid) {
-            node = node->left;
+            node = node->left.get();
         } else {
-            node = node->right;
+            node = node->right.get();
             rowIndex -= rowMid;
         }
         assert(node != nullptr);
@@ -134,8 +134,8 @@ void QueueP::remove_() {
 }
 
 void QueueP::siftUp_() {
-    std::shared_ptr<Node> node{ last_ };
-    while (auto nodeTop = node->top.lock()) {
+    Node* node{ last_ };
+    while (Node* nodeTop = const_cast<Node*>(node->top)) {
         if (node->value >= nodeTop->value) {
             return;
         }
@@ -146,10 +146,10 @@ void QueueP::siftUp_() {
 
 void QueueP::siftDown_() {
     assert(size_ > 1);
-    std::shared_ptr<Node> node{ root_ };
+    Node* node{ root_.get() };
     while (node != nullptr) {
-        std::shared_ptr<Node> left{ node->left };
-        std::shared_ptr<Node> right{ node->right };
+        Node* const left{ node->left.get() };
+        Node* const right{ node->right.get() };
         if (left == nullptr && right == nullptr) {
             return;
         }
@@ -160,7 +160,7 @@ void QueueP::siftDown_() {
             return;
         }
         assert(left != nullptr);
-        std::shared_ptr<Node> min{ left->value < right->value ? left : right };
+        Node* const min{ left->value < right->value ? left : right };
         if (min->value >= node->value) {
             return;
         }
@@ -179,20 +179,20 @@ QueueP::s_t QueueP::log2_(const s_t value) {
     return ret;
 }
 
-std::shared_ptr<QueueP::Node> QueueP::copy_(
-    const std::shared_ptr<Node>& node,
-    const std::shared_ptr<Node>& top,
-    const std::shared_ptr<Node>& last
+std::unique_ptr<QueueP::Node> QueueP::copy_(
+    const std::unique_ptr<Node>& node,
+    Node* const top,
+    const Node* const last
 ) {
-    std::shared_ptr<Node> copy{ std::make_shared<Node>(node->value, nullptr, nullptr, top) };
+    std::unique_ptr<Node> copy{ std::make_unique<Node>(node->value, nullptr, nullptr, top) };
     if (node->left != nullptr) {
-        copy->left = copy_(node->left, copy, last);
+        copy->left = copy_(node->left, copy.get(), last);
     }
     if (node->right != nullptr) {
-        copy->right = copy_(node->right, copy, last);
+        copy->right = copy_(node->right, copy.get(), last);
     }
-    if (node == last) {
-        last_ = copy;
+    if (node.get() == last) {
+        last_ = copy.get();
     }
     return copy;
 }
