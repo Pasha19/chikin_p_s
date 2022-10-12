@@ -1,0 +1,6 @@
+add_executable(test test.c)
+add_executable(clib_test clib_test.cpp)
+add_library(queue SHARED queue.h queue.cpp)
+target_link_libraries(queue queuep)
+target_link_libraries(test ${CMAKE_DL_LIBS})
+target_link_libraries(clib_test queue)
