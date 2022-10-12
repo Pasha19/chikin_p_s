@@ -10,16 +10,16 @@ public:
 
     QueueP() = default;
     QueueP(const QueueP& queueR);
-    QueueP(QueueP&& queueR);
+    QueueP(QueueP&& queueR) noexcept;
     ~QueueP() = default;
 
     QueueP& operator=(const QueueP& queueR);
-    QueueP& operator=(QueueP&& queueR);
+    QueueP& operator=(QueueP&& queueR) noexcept;
 
     s_t size() const { return size_; }
     el_t top() const;
     void pop();
-    void push(const el_t value);
+    void push(el_t value);
 
 private:
     struct Node {
@@ -34,8 +34,8 @@ private:
             , right(std::move(right_))
             , top(top_)
         {}
-        Node(const Node&) = default;
-        Node(Node&&) = default;
+        Node(const Node&) = delete;
+        Node(Node&&) noexcept = default;
         ~Node() = default;
         Node& operator=(const Node&) = delete;
         Node& operator=(Node&&) = delete;
@@ -45,16 +45,16 @@ private:
         const Node* const top{ nullptr };
     };
 
-    void append_(const el_t value);
+    void append_(el_t value);
     void remove_();
     void siftUp_();
     void siftDown_();
-    static s_t log2_(const s_t value);
+    static s_t log2_(s_t value);
 
     std::unique_ptr<Node> copy_(
         const std::unique_ptr<Node>& node,
-        Node* const top,
-        const Node* const last
+        Node* top,
+        const Node* last
     );
 
     std::unique_ptr<Node> root_;

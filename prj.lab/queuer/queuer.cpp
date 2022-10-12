@@ -11,7 +11,7 @@ QueueR::QueueR(const QueueR& queueR)
     root_ = copy_(queueR.root_, nullptr, queueR.last_);
 }
 
-QueueR::QueueR(QueueR&& queueR)
+QueueR::QueueR(QueueR&& queueR) noexcept
     : root_(queueR.root_)
     , last_(queueR.last_)
     , size_(queueR.size_)
@@ -32,7 +32,7 @@ QueueR& QueueR::operator=(const QueueR& queueR) {
     return *this;
 }
 
-QueueR& QueueR::operator=(QueueR&& queueR) {
+QueueR& QueueR::operator=(QueueR&& queueR) noexcept {
     if (&queueR == this) {
         return *this;
     }

@@ -8,16 +8,16 @@ public:
 
     QueueR() = default;
     QueueR(const QueueR& queueR);
-    QueueR(QueueR&& queueR);
+    QueueR(QueueR&& queueR) noexcept;
     ~QueueR();
 
     QueueR& operator=(const QueueR& queueR);
-    QueueR& operator=(QueueR&& queueR);
+    QueueR& operator=(QueueR&& queueR) noexcept;
 
     s_t size() const { return size_; }
     el_t top() const;
     void pop();
-    void push(const el_t value);
+    void push(el_t value);
 
 private:
     struct Node {
@@ -27,11 +27,11 @@ private:
         Node* top;
     };
 
-    void append_(const el_t value);
+    void append_(el_t value);
     void remove_();
     void siftUp_();
     void siftDown_();
-    static s_t log2_(const s_t value);
+    static s_t log2_(s_t value);
 
     static void delete_(const Node* node);
     Node* copy_(const Node* node, const Node* top, const Node* last);
