@@ -1,19 +1,29 @@
-#include <queuep/queuep.h>
+#include <queue_r/queue_r.hpp>
 
 #include <algorithm>
 #include <cassert>
-#include <memory>
+#include <vector>
 
-QueueP::QueueP(const QueueP& queueR)
-    : root_()
-    , last_()
+QueueR::QueueR(const std::vector<el_t>& data)
+        : root_()
+        , last_()
+        , size_(0)
+{
+    for (const auto el : data) {
+        push(el);
+    }
+}
+
+QueueR::QueueR(const QueueR& queueR)
+    : root_(nullptr)
+    , last_(nullptr)
     , size_(queueR.size_)
 {
     root_ = copy_(queueR.root_, nullptr, queueR.last_);
 }
 
-QueueP::QueueP(QueueP&& queueR) noexcept
-    : root_(std::move(queueR.root_))
+QueueR::QueueR(QueueR&& queueR) noexcept
+    : root_(queueR.root_)
     , last_(queueR.last_)
     , size_(queueR.size_)
 {
@@ -22,20 +32,25 @@ QueueP::QueueP(QueueP&& queueR) noexcept
     queueR.size_ = 0;
 }
 
-QueueP& QueueP::operator=(const QueueP& queueR) {
+QueueR& QueueR::operator=(const QueueR& queueR) {
     if (&queueR == this) {
         return *this;
     }
+    delete_(root_);
+    last_ = nullptr;
     size_ = queueR.size_;
     root_ = copy_(queueR.root_, nullptr, queueR.last_);
     return *this;
 }
 
-QueueP& QueueP::operator=(QueueP&& queueR) noexcept {
+QueueR& QueueR::operator=(QueueR&& queueR) noexcept {
     if (&queueR == this) {
         return *this;
     }
-    root_ = std::move(queueR.root_);
+    if (root_ != nullptr) {
+        delete_(root_);
+    }
+    root_ = queueR.root_;
     last_ = queueR.last_;
     size_ = queueR.size_;
     queueR.root_ = nullptr;
@@ -44,15 +59,16 @@ QueueP& QueueP::operator=(QueueP&& queueR) noexcept {
     return *this;
 }
 
-QueueP::el_t QueueP::top() const {
+const QueueR::el_t& QueueR::top() const {
     assert(root_ != nullptr && size_ != 0);
     return root_->value;
 }
 
-void QueueP::pop() {
+void QueueR::pop() noexcept {
     assert(root_ != nullptr && size_ != 0);
     if (size_ == 1) {
-        assert(last_ == root_.get() && root_->left == nullptr && root_->right == nullptr);
+        assert(last_ == root_ && root_->left == nullptr && root_->right == nullptr);
+        delete root_;
         root_ = nullptr;
         last_ = nullptr;
         size_ = 0;
@@ -61,8 +77,9 @@ void QueueP::pop() {
     if (size_ == 2) {
         assert(root_->left != nullptr && root_->right == nullptr);
         root_->value = root_->left->value;
+        delete root_->left;
         root_->left = nullptr;
-        last_ = root_.get();
+        last_ = root_;
         size_ = 1;
         return;
     }
@@ -70,10 +87,10 @@ void QueueP::pop() {
     siftDown_();
 }
 
-void QueueP::push(const el_t value) {
+void QueueR::push(const el_t& value) {
     if (size_ == 0) {
-        root_ = std::make_unique<Node>(value); 
-        last_ = root_.get();
+        root_ = new Node{ value, nullptr, nullptr, nullptr };
+        last_ = root_;
         ++size_;
         return;
     }
@@ -81,18 +98,24 @@ void QueueP::push(const el_t value) {
     siftUp_();
 }
 
-void QueueP::append_(const el_t value) {
+QueueR::~QueueR() {
+    if (root_ != nullptr) {
+        delete_(root_);
+    }
+}
+
+void QueueR::append_(const el_t value) {
     const s_t newSize{ size_ + 1 };
     const s_t level{ log2_(newSize) };
     s_t rowSize{ 1 << level };
     s_t rowMid{ rowSize / 2 };
     s_t rowIndex{ newSize - rowSize };
-    Node* node{ root_.get() };
+    Node* node{ root_ };
     for (s_t i{ 1 }; i < level; ++i) {
         if (rowIndex < rowMid) {
-            node = node->left.get();
+            node = node->left;
         } else {
-            node = node->right.get();
+            node = node->right;
             rowIndex -= rowMid;
         }
         assert(node != nullptr);
@@ -100,30 +123,29 @@ void QueueP::append_(const el_t value) {
         rowMid = rowSize / 2;
     }
     assert(rowSize == 2 && rowIndex < 2);
-    std::unique_ptr<Node> newNode{ std::make_unique<Node>(value, nullptr, nullptr, node) };
-    last_ = newNode.get();
-    (rowIndex == 0 ? node->left : node->right) = std::move(newNode);
+    Node* newNode{ new Node{ value, nullptr, nullptr, node } };
+    (rowIndex == 0 ? node->left : node->right) = newNode;
+    last_ = newNode;
     size_ = newSize;
 }
 
-void QueueP::remove_() {
+void QueueR::remove_() {
     assert(size_ > 1);
     root_->value = last_->value;
-    Node* lastTop = const_cast<Node*>(last_->top);
-    assert(lastTop);
-    (lastTop->left.get() == last_ ? lastTop->left : lastTop->right) = nullptr;
+    (last_->top->left == last_ ? last_->top->left : last_->top->right) = nullptr;
+    delete last_;
     last_ = nullptr;
     --size_;
     const s_t level{ log2_(size_) };
     s_t rowSize{ 1 << level };
     s_t rowMid{ rowSize / 2 };
     s_t rowIndex{ size_ - rowSize };
-    Node* node{ root_.get() };
+    Node* node{ root_ };
     for (s_t i{ 0 }; i < level; ++i) {
         if (rowIndex < rowMid) {
-            node = node->left.get();
+            node = node->left;
         } else {
-            node = node->right.get();
+            node = node->right;
             rowIndex -= rowMid;
         }
         assert(node != nullptr);
@@ -133,23 +155,23 @@ void QueueP::remove_() {
     last_ = node;
 }
 
-void QueueP::siftUp_() {
+void QueueR::siftUp_() {
     Node* node{ last_ };
-    while (Node* nodeTop = const_cast<Node*>(node->top)) {
-        if (node->value >= nodeTop->value) {
+    while (node->top != nullptr) {
+        if (node->value >= node->top->value) {
             return;
         }
-        std::swap(node->value, nodeTop->value);
-        node = nodeTop;
+        std::swap(node->value, node->top->value);
+        node = node->top;
     }
 }
 
-void QueueP::siftDown_() {
+void QueueR::siftDown_() {
     assert(size_ > 1);
-    Node* node{ root_.get() };
+    Node* node { root_ };
     while (node != nullptr) {
-        Node* const left{ node->left.get() };
-        Node* const right{ node->right.get() };
+        Node* left{ node->left };
+        Node* right{ node->right };
         if (left == nullptr && right == nullptr) {
             return;
         }
@@ -160,7 +182,7 @@ void QueueP::siftDown_() {
             return;
         }
         assert(left != nullptr);
-        Node* const min{ left->value < right->value ? left : right };
+        Node* min{ left->value < right->value ? left : right };
         if (min->value >= node->value) {
             return;
         }
@@ -170,7 +192,7 @@ void QueueP::siftDown_() {
     assert(false);
 }
 
-QueueP::s_t QueueP::log2_(const s_t value) {
+QueueR::s_t QueueR::log2_(const s_t value) {
     assert(value > 0);
     s_t ret{ -1 };
     for (s_t tmp{ 1 }; tmp <= value; tmp *= 2) {
@@ -179,20 +201,26 @@ QueueP::s_t QueueP::log2_(const s_t value) {
     return ret;
 }
 
-std::unique_ptr<QueueP::Node> QueueP::copy_(
-    const std::unique_ptr<Node>& node,
-    Node* const top,
-    const Node* const last
-) {
-    std::unique_ptr<Node> copy{ std::make_unique<Node>(node->value, nullptr, nullptr, top) };
+void QueueR::delete_(const Node* node) {
     if (node->left != nullptr) {
-        copy->left = copy_(node->left, copy.get(), last);
+        delete_(node->left);
     }
     if (node->right != nullptr) {
-        copy->right = copy_(node->right, copy.get(), last);
+        delete_(node->right);
     }
-    if (node.get() == last) {
-        last_ = copy.get();
+    delete node;
+}
+
+QueueR::Node* QueueR::copy_(const Node* node, const Node* top, const Node* last) {
+    Node* copy = new Node{ node->value, nullptr, nullptr, const_cast<Node*>(top) };
+    if (node->left != nullptr) {
+        copy->left = copy_(node->left, copy, last);
+    }
+    if (node->right != nullptr) {
+        copy->right = copy_(node->right, copy, last);
+    }
+    if (node == last) {
+        last_ = copy;
     }
     return copy;
 }

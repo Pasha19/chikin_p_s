@@ -2,6 +2,7 @@
 #define QUEUEP_H_
 
 #include <memory>
+#include <vector>
 
 class QueueP {
 public:
@@ -9,6 +10,7 @@ public:
     using s_t = int;
 
     QueueP() = default;
+    explicit QueueP(const std::vector<el_t>& data);
     QueueP(const QueueP& queueR);
     QueueP(QueueP&& queueR) noexcept;
     ~QueueP() = default;
@@ -16,10 +18,10 @@ public:
     QueueP& operator=(const QueueP& queueR);
     QueueP& operator=(QueueP&& queueR) noexcept;
 
-    s_t size() const { return size_; }
-    el_t top() const;
-    void pop();
-    void push(el_t value);
+    bool isEmpty() const { return size_ == 0; }
+    const el_t& top() const;
+    void pop() noexcept;
+    void push(const el_t& value);
 
 private:
     struct Node {
