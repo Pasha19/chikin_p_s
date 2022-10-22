@@ -1,5 +1,6 @@
 #include <queue_p/c_queue_p.h>
 
+#include <inttypes.h>
 #include <stdio.h>
 
 int main() {
@@ -9,7 +10,7 @@ int main() {
         fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
         return 1;
     }
-    printf("Created queue: %lu\n", queue);
+    printf("Created queue: %" PRIu64 "\n", queue);
     const int array[] = { 1, 10, 2, 5, 6, 9 };
     const int size = sizeof(array) / sizeof(array[0]);
     for (int i = 0; i < size; ++i) {
@@ -44,7 +45,7 @@ int main() {
         }
     }
     printf("Queues count: %d\n", QueueCnt());
-    printf("Deleting queue: %lu\n", queue);
+    printf("Deleting queue: %" PRIu64 "\n", queue);
     if ((code = DestroyQueue(&queue)) != kGood) {
         fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
         return 1;

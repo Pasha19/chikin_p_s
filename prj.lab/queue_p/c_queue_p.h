@@ -1,20 +1,32 @@
 #ifndef C_QUEUE_P_H_
 #define C_QUEUE_P_H_
 
+#ifdef _WINDOWS
+    #define DLL_CALL __cdecl
+#else
+    #define DLL_CALL
+#endif // _WINDOWS
+
+#ifdef C_QUEUE_P_EXPORTS
+    #define DLL_EXPORT __declspec(dllexport)
+#else
+    #define DLL_EXPORT
+#endif // C_QUEUE_P_EXPORTS
+
 #ifdef __cplusplus
 
-#include <cstdint>
+    #include <cstdint>
 
-using std::uint64_t;
-using std::int32_t;
+    using std::uint64_t;
+    using std::int32_t;
 
-extern "C" {
+    extern "C" {
 
 #else
 
-#include <stdint.h>
+    #include <stdint.h>
 
-#endif
+#endif // __cplusplus
 
 typedef enum {
     kGood = 0,
@@ -24,26 +36,26 @@ typedef enum {
 
 typedef uint64_t QueueHandler;
 
-ErrorCode CreateQueue(QueueHandler* queueHandler);
+DLL_EXPORT ErrorCode DLL_CALL CreateQueue(QueueHandler* queueHandler);
 
-ErrorCode CloneQueue(QueueHandler src, QueueHandler* dest);
+DLL_EXPORT ErrorCode DLL_CALL CloneQueue(QueueHandler src, QueueHandler* dest);
 
-ErrorCode DestroyQueue(QueueHandler* queueHandler);
+DLL_EXPORT ErrorCode DLL_CALL DestroyQueue(QueueHandler* queueHandler);
 
-ErrorCode IsEmpty(QueueHandler queueHandler, int32_t* result);
+DLL_EXPORT ErrorCode DLL_CALL IsEmpty(QueueHandler queueHandler, int32_t* result);
 
-ErrorCode Top(QueueHandler queueHandler, int32_t* result);
+DLL_EXPORT ErrorCode DLL_CALL Top(QueueHandler queueHandler, int32_t* result);
 
-ErrorCode Pop(QueueHandler queueHandler);
+DLL_EXPORT ErrorCode DLL_CALL Pop(QueueHandler queueHandler);
 
-ErrorCode Push(QueueHandler queueHandler, int32_t value);
+DLL_EXPORT ErrorCode DLL_CALL Push(QueueHandler queueHandler, int32_t value);
 
-const char* WhatIs(ErrorCode errorCode);
+DLL_EXPORT const char* DLL_CALL WhatIs(ErrorCode errorCode);
 
-int32_t QueueCnt();
+DLL_EXPORT int32_t DLL_CALL QueueCnt();
 
 #ifdef __cplusplus
-}
-#endif
+    }
+#endif // __cplusplus
 
-#endif
+#endif // C_QUEUE_P_H_
