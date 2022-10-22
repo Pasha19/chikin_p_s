@@ -21,11 +21,18 @@ int main() {
         }
         printf("Inserted %d: %d\n", i + 1, array[i]);
     }
+    QueueHandler queueCloned = 0;
+    if ((code = CloneQueue(queue, &queueCloned)) != kGood) {
+        fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
+        DestroyQueue(&queue);
+        return 1;
+    }
     while (1) {
         int empty = 0;
         if ((code = IsEmpty(queue, &empty)) != kGood) {
             fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
             DestroyQueue(&queue);
+            DestroyQueue(&queueCloned);
             return 1;
         }
         if (empty) {
@@ -35,18 +42,53 @@ int main() {
         if ((code = Top(queue, &value)) != kGood) {
             fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
             DestroyQueue(&queue);
+            DestroyQueue(&queueCloned);
             return 1;
         }
         printf("From queue: %d\n", value);
         if ((code = Pop(queue)) != kGood) {
             fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
             DestroyQueue(&queue);
+            DestroyQueue(&queueCloned);
+            return 1;
+        }
+    }
+    while (1) {
+        int empty = 0;
+        if ((code = IsEmpty(queueCloned, &empty)) != kGood) {
+            fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
+            DestroyQueue(&queue);
+            DestroyQueue(&queueCloned);
+            return 1;
+        }
+        if (empty) {
+            break;
+        }
+        int value = 0;
+        if ((code = Top(queueCloned, &value)) != kGood) {
+            fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
+            DestroyQueue(&queue);
+            DestroyQueue(&queueCloned);
+            return 1;
+        }
+        printf("From cloned queue: %d\n", value);
+        if ((code = Pop(queueCloned)) != kGood) {
+            fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
+            DestroyQueue(&queue);
+            DestroyQueue(&queueCloned);
             return 1;
         }
     }
     printf("Queues count: %d\n", QueueCnt());
     printf("Deleting queue: %" PRIu64 "\n", queue);
     if ((code = DestroyQueue(&queue)) != kGood) {
+        fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
+        DestroyQueue(&queueCloned);
+        return 1;
+    }
+    printf("Queues count: %d\n", QueueCnt());
+    printf("Deleting queue: %" PRIu64 "\n", queueCloned);
+    if ((code = DestroyQueue(&queueCloned)) != kGood) {
         fprintf(stderr, "Code: %d\nMsg: %s\n", code, WhatIs(code));
         return 1;
     }
